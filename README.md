@@ -2,7 +2,19 @@
 
 An AI-powered employee request management and automation system that classifies employee requests, determines priority, routes requests to the appropriate team, tracks SLA deadlines, and automatically escalates overdue requests through Slack.
 
-The project demonstrates an end-to-end business automation workflow using **FastAPI, OpenAI, MongoDB Atlas, n8n, and Slack**.
+The project demonstrates an end-to-end business automation workflow using **FastAPI, OpenAI, MongoDB Atlas, n8n, Slack, and Render**.
+
+---
+
+## Live Demo
+
+**Employee Request Portal:**  
+https://employee-request-automation-system.onrender.com/
+
+**Request Management Dashboard:**  
+https://employee-request-automation-system.onrender.com/admin
+
+> The application is deployed as a temporary assessment Proof of Concept. Free-tier hosting may require a short startup period after inactivity.
 
 ---
 
@@ -15,68 +27,25 @@ The project demonstrates an end-to-end business automation workflow using **Fast
 - Dynamic SLA calculation
 - Unique request/ticket IDs
 - MongoDB Atlas persistence
-- Admin monitoring dashboard
+- Centralized request management dashboard
 - Request status management
 - Team-specific Slack notifications
-- Automated SLA monitoring
+- Automated SLA monitoring every 15 minutes
 - Daily escalation reminders for unresolved overdue requests
 - Secured internal automation APIs
 - n8n-based workflow orchestration
+- Public cloud deployment
 
 ---
 
 ## System Architecture
 
-```text
-                         Employee
-                            |
-                            v
-                   Employee Web Portal
-                            |
-                            v
-                         FastAPI
-                            |
-              +-------------+-------------+
-              |             |             |
-              v             v             v
-          OpenAI       MongoDB Atlas    n8n Webhook
-       Classification                       |
-                                            v
-                                      Team Routing
-                                            |
-                                            v
-                                          Slack
-```
+![Employee Request Automation System Architecture](docs/architecture-diagram.png)
 
-A second automation continuously monitors SLA breaches:
+The system consists of two primary workflows:
 
-```text
-                    n8n Schedule Trigger
-                      Every 15 Minutes
-                              |
-                              v
-                       FastAPI Internal API
-                              |
-                              v
-                         MongoDB Atlas
-                              |
-                              v
-                    Retrieve Overdue Tickets
-                              |
-                              v
-                         Split Tickets
-                              |
-                              v
-                       Route by Team
-                              |
-                              v
-                     Slack SLA Escalation
-                              |
-                              v
-                     Update escalated_at
-```
-
-A detailed architecture diagram is available in the `docs/` directory.
+1. **New Request Processing** — handles request submission, AI classification, ticket creation, team routing, and Slack notification.
+2. **SLA Monitoring & Escalation** — periodically identifies overdue tickets and sends controlled escalation notifications.
 
 ---
 
@@ -90,7 +59,7 @@ A detailed architecture diagram is available in the `docs/` directory.
 | Database | MongoDB Atlas |
 | Workflow Automation | n8n |
 | Notifications | Slack |
-| Public Development Tunnel | ngrok |
+| Deployment | Render |
 | API Server | Uvicorn |
 
 ---
@@ -101,24 +70,24 @@ A detailed architecture diagram is available in the `docs/` directory.
 
 An employee submits a request through the web portal.
 
-The request contains information such as:
+The request contains:
 
 - Employee name
 - Employee email
 - Request description
 
-FastAPI receives the request and passes the request text to the AI classification service.
+FastAPI validates the submission and passes the request text to the AI classification service.
 
 ---
 
 ### 2. AI Classification
 
-The OpenAI-powered classification layer analyzes the request and determines its:
+The OpenAI-powered classification layer analyzes the request and determines:
 
 - **Category**
 - **Priority**
 
-Supported request categories include:
+Supported categories include:
 
 - HR
 - IT
@@ -126,13 +95,13 @@ Supported request categories include:
 - Operations
 - Other
 
-The application then determines the appropriate support team and SLA based on the classification result.
+Based on the classification result, application rules determine the appropriate support team and target SLA.
 
 ---
 
 ### 3. Ticket Creation
 
-A unique ticket ID is generated for every request.
+Every request receives a unique ticket identifier.
 
 Example:
 
@@ -140,7 +109,7 @@ Example:
 REQ-2026-1DBCAB
 ```
 
-The ticket is stored in MongoDB Atlas together with information such as:
+The ticket is persisted in MongoDB Atlas with information such as:
 
 ```text
 ticket_id
@@ -160,11 +129,13 @@ is_escalated
 escalated_at
 ```
 
+After creation, the application triggers the n8n request-routing workflow.
+
 ---
 
 ## Request Lifecycle
 
-Requests move through the following lifecycle:
+Requests progress through the following lifecycle:
 
 ```text
 Open
@@ -176,20 +147,20 @@ Active
 Finalized
 ```
 
-When a request is finalized, its resolution timestamp is recorded.
+The Request Management Dashboard provides a centralized interface for viewing and managing tickets.
 
-Finalized requests are excluded from future SLA escalation processing.
+When a request is finalized, its resolution timestamp is recorded. Finalized requests are excluded from future SLA escalation processing.
 
 ---
 
-## Admin Dashboard
+## Request Management Dashboard
 
-The admin dashboard provides visibility into employee requests and their current state.
+The dashboard provides centralized visibility into employee requests and their current state.
 
-Administrators can:
+Support or administrative users can:
 
 - View submitted requests
-- Inspect request details
+- Inspect individual ticket details
 - See category and priority
 - View the assigned team
 - Monitor SLA deadlines
@@ -197,15 +168,17 @@ Administrators can:
 - Update request status
 - Finalize resolved requests
 
+For this Proof of Concept, the dashboard acts as the shared request-management interface. A production implementation could introduce authentication and role-based team views.
+
 ---
 
 # Automation Workflows
 
 The system contains two primary n8n workflows.
 
-## Workflow 1 - New Request Routing
+## Workflow 1 — New Request Routing
 
-When FastAPI creates a request, it sends the ticket data to an n8n webhook.
+After FastAPI creates and stores a ticket, it sends the ticket data to an n8n webhook.
 
 ```text
 Employee Request
@@ -214,7 +187,10 @@ Employee Request
 FastAPI
        |
        v
-MongoDB
+AI Classification
+       |
+       v
+MongoDB Atlas
        |
        v
 n8n Webhook
@@ -236,13 +212,15 @@ Route by Assigned Team
                   Slack
 ```
 
-Each request is sent to the Slack channel belonging to the assigned support team.
+n8n evaluates the assigned team and routes the request notification to the corresponding Slack channel.
+
+This provides immediate visibility to the team responsible for handling the request.
 
 ---
 
-## Workflow 2 - SLA Monitoring & Daily Escalation
+## Workflow 2 — SLA Monitoring & Daily Escalation
 
-A scheduled n8n workflow checks for overdue requests every 15 minutes.
+A second n8n workflow runs every **15 minutes** to identify unresolved tickets that have exceeded their SLA.
 
 ```text
 Check SLA Every 15 Minutes
@@ -269,64 +247,61 @@ Route Escalation by Assigned Team
               Mark Ticket Escalated
 ```
 
-The workflow uses secured FastAPI internal endpoints to retrieve and update tickets.
+The workflow communicates with secured FastAPI internal endpoints to retrieve eligible overdue tickets and record successful escalations.
 
 ### Daily Escalation Logic
 
-An overdue request receives a maximum of **one escalation notification per calendar day**.
-
-For example:
+An unresolved overdue ticket receives a maximum of **one escalation notification per calendar day**.
 
 ```text
-Day 1
 Ticket exceeds SLA
-      |
-      v
+        |
+        v
 Slack escalation sent
-      |
-      v
+        |
+        v
 escalated_at updated
-
-Same day
-      |
-      v
-Further 15-minute checks skip the ticket
-
-Next day
-      |
-      v
-Still unresolved?
-      |
-     Yes
-      |
-      v
+        |
+        v
+Further checks on the same day
+        |
+        v
+Ticket skipped
+        |
+        v
+Next calendar day
+        |
+        v
+Still overdue and unresolved?
+        |
+       Yes
+        |
+        v
 Send another escalation
 ```
 
-This prevents notification spam while ensuring unresolved SLA breaches continue to receive attention.
+This prevents repeated notifications every 15 minutes while ensuring unresolved SLA breaches continue to receive attention.
 
 Daily escalation boundaries are evaluated using the **Asia/Kolkata** timezone.
 
 ---
 
-## Internal API Security
+## Internal Automation API
 
-The n8n SLA workflow communicates with internal FastAPI endpoints.
-
-Examples:
+The SLA workflow communicates with dedicated FastAPI endpoints:
 
 ```text
 GET   /api/internal/tickets/overdue
 PATCH /api/internal/tickets/{ticket_id}/escalated
 ```
 
-These endpoints require an internal API key through the request header:
+These endpoints require an internal API key supplied through:
 
 ```text
 X-Internal-API-Key
 ```
 
-The key is stored as an environment variable and is not committed to source control.
+The key is stored securely as an environment variable and is never committed to source control.
 
 ---
 
@@ -358,7 +333,6 @@ employee-request-system/
 |   +-- services/
 |   |   +-- automation_service.py
 |   |   +-- classification_service.py
-|   |   +-- n8n_service.py
 |   |   +-- ticket_service.py
 |   |
 |   +-- static/
@@ -375,6 +349,8 @@ employee-request-system/
 |   +-- main.py
 |
 +-- docs/
+|   +-- architecture-diagram.png
+|
 +-- n8n/
 +-- tests/
 +-- .env.example
@@ -387,14 +363,14 @@ employee-request-system/
 
 # Local Setup
 
-## 1. Clone the repository
+## 1. Clone the Repository
 
 ```bash
 git clone https://github.com/saiffOP/employee-request-automation-system.git
 cd employee-request-automation-system
 ```
 
-## 2. Create a virtual environment
+## 2. Create a Virtual Environment
 
 ```bash
 python -m venv .venv
@@ -412,13 +388,13 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-## 3. Install dependencies
+## 3. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## 4. Configure environment variables
+## 4. Configure Environment Variables
 
 Copy:
 
@@ -432,7 +408,16 @@ to:
 .env
 ```
 
-and provide the required credentials and configuration values.
+Configure the required environment variables:
+
+```text
+MONGODB_URI
+MONGODB_DATABASE
+OPENAI_API_KEY
+OPENAI_CLASSIFICATION_MODEL
+N8N_NEW_REQUEST_WEBHOOK_URL
+INTERNAL_API_KEY
+```
 
 Never commit the `.env` file.
 
@@ -442,13 +427,13 @@ Never commit the `.env` file.
 uvicorn app.main:app --reload
 ```
 
-The application will be available at:
+The local application will be available at:
 
 ```text
 http://127.0.0.1:8000
 ```
 
-Admin dashboard:
+Request Management Dashboard:
 
 ```text
 http://127.0.0.1:8000/admin
@@ -456,9 +441,33 @@ http://127.0.0.1:8000/admin
 
 ---
 
+## Deployment
+
+The assessment prototype is deployed on **Render**.
+
+Production environment variables are configured through the hosting environment rather than stored in the repository.
+
+The deployed FastAPI application communicates with:
+
+```text
+Render
+   |
+   +--> MongoDB Atlas
+   |
+   +--> OpenAI API
+   |
+   +--> n8n Cloud
+            |
+            +--> Slack
+```
+
+This allows the assessment prototype to operate independently of the developer's local machine.
+
+---
+
 ## n8n Workflows
 
-Exported workflow definitions are stored in:
+Sanitized workflow exports are stored in:
 
 ```text
 n8n/
@@ -469,39 +478,43 @@ The repository contains workflows for:
 1. New employee request routing
 2. SLA monitoring and daily escalation
 
-Credentials and secrets should be configured separately inside n8n and must not be committed to the repository.
+The exported versions contain no production API keys or Slack credentials. Anyone importing the workflows must configure their own credentials and deployment endpoints.
 
 ---
 
 ## Security
 
-The project follows several basic security practices:
+The project applies several security practices appropriate for the Proof of Concept:
 
 - Secrets are stored using environment variables.
 - `.env` is excluded from Git.
 - MongoDB credentials are not stored in source code.
 - OpenAI credentials are not stored in source code.
 - Internal automation endpoints require API-key authentication.
-- n8n workflow exports should not contain production credentials.
+- Public n8n workflow exports are sanitized.
+- Production credentials are configured separately in Render and n8n.
+
+The publicly hosted assessment environment contains only demonstration data and is intended as a temporary Proof of Concept.
 
 ---
 
 ## Future Improvements
 
-For a production deployment, the system could be extended with:
+For a production implementation, the system could be extended with:
 
-- User authentication
+- Authentication and Single Sign-On (SSO)
 - Role-based access control
-- Team-specific dashboards
+- Team-specific request dashboards
+- Employee self-service ticket tracking
 - Complete ticket audit history
 - SLA analytics and reporting
 - Queue-based asynchronous processing
-- Centralized application logging
+- Centralized logging
 - Monitoring and observability
-- Automated integration tests
+- Automated integration and end-to-end tests
 - CI/CD pipelines
-- Permanent cloud deployment
-- Secret-manager integration
+- Managed secret storage
+- High-availability cloud infrastructure
 
 ---
 
