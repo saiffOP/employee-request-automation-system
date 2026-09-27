@@ -6,18 +6,6 @@ The project demonstrates an end-to-end business automation workflow using **Fast
 
 ---
 
-## Live Demo
-
-**Employee Request Portal:**  
-https://employee-request-automation-system.onrender.com/
-
-**Request Management Dashboard:**  
-https://employee-request-automation-system.onrender.com/admin
-
-> The application is deployed as a temporary assessment Proof of Concept. Free-tier hosting may require a short startup period after inactivity.
-
----
-
 ## Features
 
 - Employee self-service request portal
