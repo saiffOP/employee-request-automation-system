@@ -1,0 +1,500 @@
+{
+  "name": "SLA Monitoring & Escalation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        64
+      ],
+      "id": "7f81634a-e3b0-4af1-9a1e-9392520ffa0b",
+      "name": "Check SLA Every 15 Minutes"
+    },
+    {
+      "parameters": {
+        "url": "https://YOUR-API-DOMAIN/api/internal/tickets/overdue",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-API-Key",
+              "value": "YOUR_INTERNAL_API_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        64
+      ],
+      "id": "2d91a1cb-ce81-420a-a9b5-c93812337697",
+      "name": "Get Overdue Tickets"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "tickets",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        448,
+        64
+      ],
+      "id": "40f1a9a3-f42b-4010-a1c2-efbceb0df2ba",
+      "name": "Split Overdue Tickets"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.assigned_team }}",
+                    "rightValue": "Payroll Team",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "24d9e778-caa6-429d-a968-7b01d1cf1fec"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Payroll"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "0b5ca856-41ff-406f-9be5-fd83e414b38a",
+                    "leftValue": "={{ $json.assigned_team }}",
+                    "rightValue": "HR Team",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "HR"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "5ae5edcc-f829-402b-a7b5-ef1ca77979d7",
+                    "leftValue": "={{ $json.assigned_team }}",
+                    "rightValue": "IT Support",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "IT"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "d490813e-f323-4ffb-97ad-0535da5b1b54",
+                    "leftValue": "={{ $json.assigned_team }}",
+                    "rightValue": "Operations Team",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Operations"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "General Support"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        16
+      ],
+      "id": "da85692e-65ba-4e27-8a9d-ffff554ff0af",
+      "name": "Route Escalation by Assigned Team"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0C5HQF0A8G",
+          "mode": "list",
+          "cachedResultName": "employee-support-payroll"
+        },
+        "text": "=🚨 *SLA BREACH — Immediate Attention Required*\n\n*Ticket:* {{ $json.ticket_id }}\n*Priority:* {{ $json.priority }}\n*Category:* {{ $json.category }}\n*Assigned Team:* {{ $json.assigned_team }}\n*Current Status:* {{ $json.status }}\n\n*Employee:* {{ $json.employee_name }}\n*Email:* {{ $json.employee_email }}\n\n*Request:*\n{{ $json.request_text }}\n\n*Target SLA:* {{ $json.sla_hours }} hours\n*Was Due:* {{ DateTime.fromISO($json.sla_due_at).setZone('Asia/Kolkata').toFormat('dd LLL yyyy, hh:mm a') }}\n\n⚠️ _This request has exceeded its SLA and requires immediate attention._",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        896,
+        -320
+      ],
+      "id": "c0160858-37ef-4d1f-a9d6-71ba4069f63a",
+      "name": "Send Payroll SLA Escalation",
+      "webhookId": "c598e55d-6a10-4633-a795-1e600a33d5d4",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "NAuKQoyeAAA9796H",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://YOUR-API-DOMAIN/api/internal/tickets/{{ $('Split Overdue Tickets').item.json.ticket_id }}/escalated",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-API-Key",
+              "value": "YOUR_INTERNAL_API_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1120,
+        64
+      ],
+      "id": "03687e7e-6915-462d-a785-b7147316a780",
+      "name": "Mark Ticket as Escalated"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0C482ZRTFZ",
+          "mode": "list",
+          "cachedResultName": "employee-support-hr"
+        },
+        "text": "=🚨 *SLA BREACH — Immediate Attention Required*\n\n*Ticket:* {{ $json.ticket_id }}\n*Priority:* {{ $json.priority }}\n*Category:* {{ $json.category }}\n*Assigned Team:* {{ $json.assigned_team }}\n*Current Status:* {{ $json.status }}\n\n*Employee:* {{ $json.employee_name }}\n*Email:* {{ $json.employee_email }}\n\n*Request:*\n{{ $json.request_text }}\n\n*Target SLA:* {{ $json.sla_hours }} hours\n*Was Due:* {{ DateTime.fromISO($json.sla_due_at).setZone('Asia/Kolkata').toFormat('dd LLL yyyy, hh:mm a') }}\n\n⚠️ _This request has exceeded its SLA and requires immediate attention._",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        896,
+        -128
+      ],
+      "id": "d4a1946e-114a-4cce-be2d-c90e32b10401",
+      "name": "Send HR SLA Escalation",
+      "webhookId": "c598e55d-6a10-4633-a795-1e600a33d5d4",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0C4JB811EZ",
+          "mode": "list",
+          "cachedResultName": "employee-support-it"
+        },
+        "text": "=🚨 *SLA BREACH — Immediate Attention Required*\n\n*Ticket:* {{ $json.ticket_id }}\n*Priority:* {{ $json.priority }}\n*Category:* {{ $json.category }}\n*Assigned Team:* {{ $json.assigned_team }}\n*Current Status:* {{ $json.status }}\n\n*Employee:* {{ $json.employee_name }}\n*Email:* {{ $json.employee_email }}\n\n*Request:*\n{{ $json.request_text }}\n\n*Target SLA:* {{ $json.sla_hours }} hours\n*Was Due:* {{ DateTime.fromISO($json.sla_due_at).setZone('Asia/Kolkata').toFormat('dd LLL yyyy, hh:mm a') }}\n\n⚠️ _This request has exceeded its SLA and requires immediate attention._",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        896,
+        64
+      ],
+      "id": "5f43d46a-de63-4b10-b106-fc18cd65dc75",
+      "name": "Send IT SLA Escalation",
+      "webhookId": "c598e55d-6a10-4633-a795-1e600a33d5d4",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0C4PA6798A",
+          "mode": "list",
+          "cachedResultName": "employee-support-operations"
+        },
+        "text": "=🚨 *SLA BREACH — Immediate Attention Required*\n\n*Ticket:* {{ $json.ticket_id }}\n*Priority:* {{ $json.priority }}\n*Category:* {{ $json.category }}\n*Assigned Team:* {{ $json.assigned_team }}\n*Current Status:* {{ $json.status }}\n\n*Employee:* {{ $json.employee_name }}\n*Email:* {{ $json.employee_email }}\n\n*Request:*\n{{ $json.request_text }}\n\n*Target SLA:* {{ $json.sla_hours }} hours\n*Was Due:* {{ DateTime.fromISO($json.sla_due_at).setZone('Asia/Kolkata').toFormat('dd LLL yyyy, hh:mm a') }}\n\n⚠️ _This request has exceeded its SLA and requires immediate attention._",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        896,
+        256
+      ],
+      "id": "8a9ac6f2-7aef-41a1-8117-d35f57afc778",
+      "name": "Send Operations SLA Escalation",
+      "webhookId": "c598e55d-6a10-4633-a795-1e600a33d5d4",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0C4T4C41DJ",
+          "mode": "list",
+          "cachedResultName": "employee-support-general"
+        },
+        "text": "=🚨 *SLA BREACH — Immediate Attention Required*\n\n*Ticket:* {{ $json.ticket_id }}\n*Priority:* {{ $json.priority }}\n*Category:* {{ $json.category }}\n*Assigned Team:* {{ $json.assigned_team }}\n*Current Status:* {{ $json.status }}\n\n*Employee:* {{ $json.employee_name }}\n*Email:* {{ $json.employee_email }}\n\n*Request:*\n{{ $json.request_text }}\n\n*Target SLA:* {{ $json.sla_hours }} hours\n*Was Due:* {{ DateTime.fromISO($json.sla_due_at).setZone('Asia/Kolkata').toFormat('dd LLL yyyy, hh:mm a') }}\n\n⚠️ _This request has exceeded its SLA and requires immediate attention._",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        896,
+        448
+      ],
+      "id": "40a7657f-7a16-4045-b033-61b17cb72137",
+      "name": "Send General Support SLA Escalation",
+      "webhookId": "c598e55d-6a10-4633-a795-1e600a33d5d4",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Check SLA Every 15 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Get Overdue Tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Overdue Tickets": {
+      "main": [
+        [
+          {
+            "node": "Split Overdue Tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Overdue Tickets": {
+      "main": [
+        [
+          {
+            "node": "Route Escalation by Assigned Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Escalation by Assigned Team": {
+      "main": [
+        [
+          {
+            "node": "Send Payroll SLA Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send HR SLA Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send IT SLA Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Operations SLA Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send General Support SLA Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Payroll SLA Escalation": {
+      "main": [
+        [
+          {
+            "node": "Mark Ticket as Escalated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send HR SLA Escalation": {
+      "main": [
+        [
+          {
+            "node": "Mark Ticket as Escalated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send IT SLA Escalation": {
+      "main": [
+        [
+          {
+            "node": "Mark Ticket as Escalated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Operations SLA Escalation": {
+      "main": [
+        [
+          {
+            "node": "Mark Ticket as Escalated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send General Support SLA Escalation": {
+      "main": [
+        [
+          {
+            "node": "Mark Ticket as Escalated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "49708f61-2ee2-4249-9170-76f8f039bfd3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4532fee7c351ab9f257fa83acd529f6863edf5c495717d2ed7ac19f788f2a837"
+  },
+  "nodeGroups": [],
+  "id": "ayVhq4eG28mOLq9L",
+  "tags": []
+}

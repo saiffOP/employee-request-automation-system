@@ -1,0 +1,358 @@
+{
+  "name": "Receive New Employee Request",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "employee-request-created",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        240
+      ],
+      "id": "d83100ba-c32f-40ee-a628-8a53c8a8fca1",
+      "name": "Webhook",
+      "webhookId": "5c1aabed-6859-4c80-8661-3f76a42b5df9"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.assigned_team }}",
+                    "rightValue": "Payroll Team",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "058a3c14-5e50-44b3-bb29-09448e80e960"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Payroll"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "29f46afc-7aee-4625-9351-5e5c0c0068e3",
+                    "leftValue": "={{ $json.body.assigned_team }}",
+                    "rightValue": "HR Team",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "HR"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "0db63acb-a085-4b4d-94d3-6abf7ab4fe2b",
+                    "leftValue": "={{ $json.body.assigned_team }}",
+                    "rightValue": "IT Support",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "IT"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ec702614-a39c-4d84-9337-a9177ce86b50",
+                    "leftValue": "={{ $json.body.assigned_team }}",
+                    "rightValue": "Operations Team",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Operations"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "General Support"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        192
+      ],
+      "id": "90473a3f-45a6-466f-a999-7cf5d3fb5c0d",
+      "name": "Route Request by Assigned Team"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0C4JB811EZ",
+          "mode": "list",
+          "cachedResultName": "employee-support-it"
+        },
+        "text": "=🚨 *New Employee Support Request*\n\n*Ticket:* {{ $json.body.ticket_id }}\n*Priority:* {{ $json.body.priority }}\n*Category:* {{ $json.body.category }}\n*Assigned Team:* {{ $json.body.assigned_team }}\n\n*Employee:* {{ $json.body.employee_name }}\n*Email:* {{ $json.body.employee_email }}\n\n*Request:*\n{{ $json.body.request_text }}\n\n*Target SLA:* {{ $json.body.sla_hours }} hours\n*Due:* {{ DateTime.fromISO($json.body.sla_due_at).setZone('Asia/Kolkata').toFormat('dd LLL yyyy, hh:mm a') }}\n_*Status:* {{ $json.body.status }}_",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        448,
+        240
+      ],
+      "id": "29e79743-d43f-4b68-aadb-df799142ffda",
+      "name": "Notify IT Support in Slack",
+      "webhookId": "811cb8cd-b936-4847-a24c-d442c897cbe5",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0C5HQF0A8G",
+          "mode": "list",
+          "cachedResultName": "employee-support-payroll"
+        },
+        "text": "=🚨 *New Employee Support Request*\n\n*Ticket:* {{ $json.body.ticket_id }}\n*Priority:* {{ $json.body.priority }}\n*Category:* {{ $json.body.category }}\n*Assigned Team:* {{ $json.body.assigned_team }}\n\n*Employee:* {{ $json.body.employee_name }}\n*Email:* {{ $json.body.employee_email }}\n\n*Request:*\n{{ $json.body.request_text }}\n\n*Target SLA:* {{ $json.body.sla_hours }} hours\n*Due:* {{ DateTime.fromISO($json.body.sla_due_at).setZone('Asia/Kolkata').toFormat('dd LLL yyyy, hh:mm a') }}\n\n_*Status:* {{ $json.body.status }}_",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        448,
+        -144
+      ],
+      "id": "d55e86e3-99af-492a-a277-7b21207619fe",
+      "name": "Notify Payroll Team in Slack",
+      "webhookId": "811cb8cd-b936-4847-a24c-d442c897cbe5",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0C482ZRTFZ",
+          "mode": "list",
+          "cachedResultName": "employee-support-hr"
+        },
+        "text": "=🚨 *New Employee Support Request*\n\n*Ticket:* {{ $json.body.ticket_id }}\n*Priority:* {{ $json.body.priority }}\n*Category:* {{ $json.body.category }}\n*Assigned Team:* {{ $json.body.assigned_team }}\n\n*Employee:* {{ $json.body.employee_name }}\n*Email:* {{ $json.body.employee_email }}\n\n*Request:*\n{{ $json.body.request_text }}\n\n*Target SLA:* {{ $json.body.sla_hours }} hours\n*Due:* {{ DateTime.fromISO($json.body.sla_due_at).setZone('Asia/Kolkata').toFormat('dd LLL yyyy, hh:mm a') }}\n\n_*Status:* {{ $json.body.status }}_",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        448,
+        48
+      ],
+      "id": "c2238668-6a08-4764-a7ed-59e42ed4322e",
+      "name": "Notify HR Team in Slack",
+      "webhookId": "811cb8cd-b936-4847-a24c-d442c897cbe5",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0C4PA6798A",
+          "mode": "list",
+          "cachedResultName": "employee-support-operations"
+        },
+        "text": "=🚨 *New Employee Support Request*\n\n*Ticket:* {{ $json.body.ticket_id }}\n*Priority:* {{ $json.body.priority }}\n*Category:* {{ $json.body.category }}\n*Assigned Team:* {{ $json.body.assigned_team }}\n\n*Employee:* {{ $json.body.employee_name }}\n*Email:* {{ $json.body.employee_email }}\n\n*Request:*\n{{ $json.body.request_text }}\n\n*Target SLA:* {{ $json.body.sla_hours }} hours\n*Due:* {{ DateTime.fromISO($json.body.sla_due_at).setZone('Asia/Kolkata').toFormat('dd LLL yyyy, hh:mm a') }}\n\n_*Status:* {{ $json.body.status }}_",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        448,
+        432
+      ],
+      "id": "78d19de5-5627-449e-a8eb-6afafba7edd9",
+      "name": "Notify Operations Team in Slack",
+      "webhookId": "811cb8cd-b936-4847-a24c-d442c897cbe5",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0C4T4C41DJ",
+          "mode": "list",
+          "cachedResultName": "employee-support-general"
+        },
+        "text": "=🚨 *New Employee Support Request*\n\n*Ticket:* {{ $json.body.ticket_id }}\n*Priority:* {{ $json.body.priority }}\n*Category:* {{ $json.body.category }}\n*Assigned Team:* {{ $json.body.assigned_team }}\n\n*Employee:* {{ $json.body.employee_name }}\n*Email:* {{ $json.body.employee_email }}\n\n*Request:*\n{{ $json.body.request_text }}\n\n*Target SLA:* {{ $json.body.sla_hours }} hours\n*Due:* {{ DateTime.fromISO($json.body.sla_due_at).setZone('Asia/Kolkata').toFormat('dd LLL yyyy, hh:mm a') }}\n\n_*Status:* {{ $json.body.status }}_",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        448,
+        624
+      ],
+      "id": "3a70e628-f155-43cd-8570-0fc695e79304",
+      "name": "Notify General Support in Slack",
+      "webhookId": "811cb8cd-b936-4847-a24c-d442c897cbe5",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Route Request by Assigned Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Request by Assigned Team": {
+      "main": [
+        [
+          {
+            "node": "Notify Payroll Team in Slack",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify HR Team in Slack",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify IT Support in Slack",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Operations Team in Slack",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify General Support in Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "38771920-a0c1-4deb-ad96-cea69df678bb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4532fee7c351ab9f257fa83acd529f6863edf5c495717d2ed7ac19f788f2a837"
+  },
+  "nodeGroups": [],
+  "id": "XrxTI3uqaSo8v4GJ",
+  "tags": []
+}
