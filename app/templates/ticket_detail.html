@@ -1,0 +1,418 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ ticket.ticket_id }} | Employee Support
+{% endblock %}
+
+
+{% block content %}
+
+<section class="ticket-detail-section">
+
+    <div class="container ticket-detail-container">
+
+
+        <!-- Back -->
+
+        <a href="/admin" class="back-link">
+            ← Back to dashboard
+        </a>
+
+
+        <!-- Header -->
+
+        <div class="ticket-detail-header">
+
+            <div>
+
+                <span class="eyebrow">
+                    SUPPORT REQUEST
+                </span>
+
+                <h1>
+                    {{ ticket.ticket_id }}
+                </h1>
+
+                <p>
+                    Created
+                    {{ ticket.created_at.strftime(
+                    "%d %b %Y at %H:%M"
+                    ) }}
+                </p>
+
+            </div>
+
+
+            <span
+                    class="detail-status
+                detail-status-{{ ticket.status | lower }}"
+            >
+                {{ ticket.status }}
+            </span>
+
+        </div>
+
+
+        <!-- Lifecycle -->
+
+        <div class="lifecycle-card">
+
+            <div class="lifecycle-title">
+                Request lifecycle
+            </div>
+
+
+            <div class="lifecycle">
+
+                <div class="lifecycle-step completed">
+
+                    <div class="lifecycle-circle">
+                        ✓
+                    </div>
+
+                    <span>Open</span>
+
+                </div>
+
+
+                <div
+                        class="lifecycle-line
+                    {% if ticket.status in ['Active', 'Finalized'] %}
+                    completed-line
+                    {% endif %}"
+                ></div>
+
+
+                <div
+                        class="lifecycle-step
+                    {% if ticket.status in ['Active', 'Finalized'] %}
+                    completed
+                    {% endif %}"
+                >
+
+                    <div class="lifecycle-circle">
+                        {% if ticket.status in ['Active', 'Finalized'] %}
+                        ✓
+                        {% else %}
+                        2
+                        {% endif %}
+                    </div>
+
+                    <span>Active</span>
+
+                </div>
+
+
+                <div
+                        class="lifecycle-line
+                    {% if ticket.status == 'Finalized' %}
+                    completed-line
+                    {% endif %}"
+                ></div>
+
+
+                <div
+                        class="lifecycle-step
+                    {% if ticket.status == 'Finalized' %}
+                    completed
+                    {% endif %}"
+                >
+
+                    <div class="lifecycle-circle">
+                        {% if ticket.status == 'Finalized' %}
+                        ✓
+                        {% else %}
+                        3
+                        {% endif %}
+                    </div>
+
+                    <span>Finalized</span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="ticket-detail-grid">
+
+
+            <!-- Main Information -->
+
+            <div class="detail-card">
+
+                <h2>Request details</h2>
+
+
+                <div class="detail-section">
+
+                    <span class="detail-label">
+                        Employee
+                    </span>
+
+                    <strong>
+                        {{ ticket.employee_name }}
+                    </strong>
+
+                    <span class="detail-secondary">
+                        {{ ticket.employee_email }}
+                    </span>
+
+                </div>
+
+
+                <div class="detail-section">
+
+                    <span class="detail-label">
+                        Request
+                    </span>
+
+                    <p class="request-content">
+                        {{ ticket.request_text }}
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- Classification -->
+
+            <div class="detail-card">
+
+                <h2>Classification</h2>
+
+
+                <div class="metadata-row">
+
+                    <span>Category</span>
+
+                    <strong>
+                        {{ ticket.category }}
+                    </strong>
+
+                </div>
+
+
+                <div class="metadata-row">
+
+                    <span>Priority</span>
+
+                    <strong
+                            class="priority-{{ ticket.priority | lower }}"
+                    >
+                        {{ ticket.priority }}
+                    </strong>
+
+                </div>
+
+
+                <div class="metadata-row">
+
+                    <span>Assigned team</span>
+
+                    <strong>
+                        {{ ticket.assigned_team }}
+                    </strong>
+
+                </div>
+
+
+                <div class="metadata-row">
+
+                    <span>SLA target</span>
+
+                    <strong>
+                        {{ ticket.sla_hours }} hours
+                    </strong>
+
+                </div>
+
+
+                <div class="metadata-row">
+
+                    <span>SLA due</span>
+
+                    <strong>
+                        {{ ticket.sla_due_at.strftime(
+                        "%d %b %Y, %H:%M"
+                        ) }}
+                    </strong>
+
+                </div>
+
+
+                <div class="metadata-row">
+
+                    <span>SLA status</span>
+
+                    {% if ticket.status == "Finalized" %}
+
+                    <strong class="sla-good">
+                        Closed
+                    </strong>
+
+                    {% elif is_overdue %}
+
+                    <strong class="sla-overdue">
+                        Overdue
+                    </strong>
+
+                    {% else %}
+
+                    <strong class="sla-good">
+                        Within SLA
+                    </strong>
+
+                    {% endif %}
+
+                </div>
+                {% if ticket.classification_confidence is defined
+                and ticket.classification_confidence is not none %}
+
+                <div class="metadata-row">
+
+                    <span>AI confidence</span>
+
+                    <strong>
+                        {{ "%.0f"|format(
+                        ticket.classification_confidence * 100
+                        ) }}%
+                    </strong>
+
+                </div>
+
+                {% endif %}
+                {% if ticket.classification_reasoning is defined
+                and ticket.classification_reasoning %}
+
+                <div class="classification-reason">
+
+                    <span>AI CLASSIFICATION</span>
+
+                    <p>
+                        {{ ticket.classification_reasoning }}
+                    </p>
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <!-- Actions -->
+
+        <div class="ticket-actions-card">
+
+            <div>
+
+                <h3>Request status</h3>
+
+                {% if ticket.status == "Open" %}
+
+                <p>
+                    This request is waiting for a
+                    support team member to begin work.
+                </p>
+
+                {% elif ticket.status == "Active" %}
+
+                <p>
+                    This request is currently being
+                    handled by {{ ticket.assigned_team }}.
+                </p>
+
+                {% else %}
+
+                <p>
+                    This request has been finalized.
+                </p>
+
+                {% endif %}
+
+            </div>
+
+
+            {% if ticket.status == "Open" %}
+
+            <form
+                    method="POST"
+                    action="/admin/tickets/{{ ticket.ticket_id }}/status"
+            >
+
+                <input
+                        type="hidden"
+                        name="status"
+                        value="Active"
+                >
+
+                <button
+                        type="submit"
+                        class="primary-action status-button"
+                >
+                    Mark as Active →
+                </button>
+
+            </form>
+
+
+            {% elif ticket.status == "Active" %}
+
+            <form
+                    method="POST"
+                    action="/admin/tickets/{{ ticket.ticket_id }}/status"
+            >
+
+                <input
+                        type="hidden"
+                        name="status"
+                        value="Finalized"
+                >
+
+                <button
+                        type="submit"
+                        class="finalize-button"
+                >
+                    ✓ Mark as Finalized
+                </button>
+
+            </form>
+
+
+            {% else %}
+
+            <div class="finalized-message">
+                ✓ Request completed
+            </div>
+
+            {% endif %}
+
+        </div>
+
+
+        {% if ticket.status == "Finalized"
+        and ticket.resolved_at %}
+
+        <div class="resolution-info">
+
+            Finalized on
+            <strong>
+                {{ ticket.resolved_at.strftime(
+                "%d %b %Y at %H:%M"
+                ) }}
+            </strong>
+
+        </div>
+
+        {% endif %}
+
+
+    </div>
+
+</section>
+
+{% endblock %}

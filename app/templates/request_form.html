@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}
+Submit Request | Employee Support
+{% endblock %}
+
+
+{% block content %}
+
+<section class="page-section">
+
+    <div class="container request-layout">
+
+        <div class="page-intro">
+
+            <span class="eyebrow">EMPLOYEE SUPPORT</span>
+
+            <h1>How can we help?</h1>
+
+            <p>
+                Submit your request and we'll automatically route it
+                to the appropriate team.
+            </p>
+
+            <div class="feature-list">
+
+                <div class="feature">
+                    <span class="feature-number">01</span>
+                    <div>
+                        <strong>Submit your request</strong>
+                        <p>Tell us what you need help with.</p>
+                    </div>
+                </div>
+
+                <div class="feature">
+                    <span class="feature-number">02</span>
+                    <div>
+                        <strong>Automatic routing</strong>
+                        <p>
+                            Your request is categorized and sent
+                            to the right team.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="feature">
+                    <span class="feature-number">03</span>
+                    <div>
+                        <strong>Track resolution</strong>
+                        <p>
+                            Every request receives a unique ticket
+                            number and status.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="request-card">
+
+            <div class="card-header">
+                <h2>Submit a request</h2>
+                <p>Provide the details below to create a support ticket.</p>
+            </div>
+            {% if error %}
+            <div class="form-error">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/requests">
+
+                <div class="form-group">
+                    <label for="employee_name">Full name</label>
+
+                    <input
+                            id="employee_name"
+                            name="employee_name"
+                            type="text"
+                            placeholder="Enter your full name"
+                            value="{{ employee_name | default('') }}"
+                            required
+                    >
+                </div>
+
+
+                <div class="form-group">
+                    <label for="employee_email">Work email</label>
+
+                    <input
+                            id="employee_email"
+                            name="employee_email"
+                            type="email"
+                            placeholder="name@company.com"
+                            value="{{ employee_email | default('') }}"
+                            required
+                    >
+                </div>
+
+
+                <div class="form-group">
+
+                    <div class="label-row">
+                        <label for="request_text">
+                            Describe your request
+                        </label>
+
+                        <span id="character-count">
+                            0 / 1000
+                        </span>
+                    </div>
+
+                    <textarea
+                            id="request_text"
+                            name="request_text"
+                            rows="7"
+                            maxlength="1000"
+                            placeholder="Please describe what you need help with..."
+                            required
+                    >{{ request_text | default('') }}</textarea>
+
+                    <small>
+                        Include enough detail for the support team
+                        to understand the issue.
+                    </small>
+
+                </div>
+
+
+                <button type="submit" class="primary-button">
+                    Submit Request
+                    <span>→</span>
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}

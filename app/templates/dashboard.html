@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}
+Admin Dashboard | Employee Support
+{% endblock %}
+
+
+{% block content %}
+
+<section class="admin-section">
+
+    <div class="container">
+
+        <!-- Page Header -->
+
+        <div class="admin-header">
+
+            <div>
+                <span class="eyebrow">
+                    REQUEST MANAGEMENT
+                </span>
+
+                <h1>Admin Dashboard</h1>
+
+                <p>
+                    Monitor employee requests, ownership,
+                    status and service levels.
+                </p>
+            </div>
+
+            <a href="/" class="primary-action">
+                + New Request
+            </a>
+
+        </div>
+
+
+        <!-- Statistics -->
+
+        <div class="stats-grid">
+
+            <div class="stat-card">
+                <span class="stat-label">TOTAL REQUESTS</span>
+                <strong>{{ total_count }}</strong>
+                <span class="stat-description">
+                    All submitted requests
+                </span>
+            </div>
+
+
+            <div class="stat-card">
+                <span class="stat-label">OPEN</span>
+                <strong>{{ open_count }}</strong>
+                <span class="stat-description">
+                    Awaiting action
+                </span>
+            </div>
+
+
+            <div class="stat-card">
+                <span class="stat-label">ACTIVE</span>
+                <strong>{{ active_count }}</strong>
+                <span class="stat-description">
+                    Currently being handled
+                </span>
+            </div>
+
+
+            <div class="stat-card">
+                <span class="stat-label">FINALIZED</span>
+                <strong>{{ finalized_count }}</strong>
+                <span class="stat-description">
+                    Resolved requests
+                </span>
+            </div>
+
+
+            <div class="stat-card overdue-card">
+                <span class="stat-label">OVERDUE</span>
+                <strong>{{ overdue_count }}</strong>
+                <span class="stat-description">
+                    SLA requires attention
+                </span>
+            </div>
+
+        </div>
+
+
+        <!-- Ticket Table -->
+
+        <div class="tickets-panel">
+
+            <div class="panel-header">
+
+                <div>
+                    <h2>Employee Requests</h2>
+
+                    <p>
+                        {{ total_count }} request{% if total_count != 1 %}s{% endif %}
+                        recorded
+                    </p>
+                </div>
+
+            </div>
+
+
+            {% if tickets %}
+
+            <div class="table-wrapper">
+
+                <table class="tickets-table">
+
+                    <thead>
+
+                    <tr>
+                        <th>Ticket</th>
+                        <th>Employee</th>
+                        <th>Category</th>
+                        <th>Priority</th>
+                        <th>Team</th>
+                        <th>Status</th>
+                        <th>SLA</th>
+                        <th>Created</th>
+                    </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                    {% for ticket in tickets %}
+
+                    {% set is_overdue =
+                    ticket.status != "Finalized"
+                    and ticket.sla_due_at
+                    and ticket.sla_due_at < now
+                    %}
+
+                    <tr>
+
+                        <td>
+                            <a
+                                    href="/admin/tickets/{{ ticket.ticket_id }}"
+                                    class="ticket-link"
+                            >
+                                {{ ticket.ticket_id }}
+                            </a>
+                        </td>
+
+
+                        <td>
+
+                            <div class="employee-cell">
+
+                                <strong>
+                                    {{ ticket.employee_name }}
+                                </strong>
+
+                                <span>
+                                    {{ ticket.employee_email }}
+                                </span>
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="category-badge">
+                                {{ ticket.category }}
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <span
+                                    class="priority-badge
+                                priority-badge-{{ ticket.priority | lower }}"
+                            >
+                                {{ ticket.priority }}
+                            </span>
+
+                        </td>
+
+
+                        <td>
+                            {{ ticket.assigned_team }}
+                        </td>
+
+
+                        <td>
+
+                            <span
+                                    class="table-status
+                                table-status-{{ ticket.status | lower }}"
+                            >
+                                {{ ticket.status }}
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            {% if is_overdue %}
+
+                            <span class="sla-overdue">
+                                    Overdue
+                                </span>
+
+                            {% else %}
+
+                            <span class="sla-normal">
+                                    {{ ticket.sla_hours }}h
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <td class="created-cell">
+
+                            {{ ticket.created_at.strftime(
+                            "%d %b %Y"
+                            ) }}
+
+                            <span>
+                                {{ ticket.created_at.strftime(
+                                    "%H:%M"
+                                ) }}
+                            </span>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            {% else %}
+
+            <div class="empty-state">
+
+                <h3>No requests yet</h3>
+
+                <p>
+                    Employee requests will appear here
+                    once they are submitted.
+                </p>
+
+                <a href="/" class="primary-action">
+                    Submit first request
+                </a>
+
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}

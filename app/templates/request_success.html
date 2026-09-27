@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}
+Request Submitted | Employee Support
+{% endblock %}
+
+
+{% block content %}
+
+<section class="page-section">
+
+    <div class="container success-container">
+
+        <div class="success-card">
+
+            <div class="success-icon">
+                ✓
+            </div>
+
+            <span class="eyebrow">
+                REQUEST SUBMITTED
+            </span>
+
+            <h1>Your request is on its way</h1>
+
+            <p class="success-description">
+                Your request has been created and automatically
+                routed to the appropriate support team.
+            </p>
+
+
+            <div class="ticket-number">
+
+                <span>Ticket number</span>
+
+                <strong>
+                    {{ ticket.ticket_id }}
+                </strong>
+
+            </div>
+
+
+            <div class="ticket-summary">
+
+                <div class="summary-item">
+                    <span>Category</span>
+                    <strong>
+                        {{ ticket.category.value }}
+                    </strong>
+                </div>
+
+                <div class="summary-item">
+                    <span>Priority</span>
+
+                    <strong class="priority-{{ ticket.priority.value | lower }}">
+                        {{ ticket.priority.value }}
+                    </strong>
+                </div>
+
+                <div class="summary-item">
+                    <span>Assigned team</span>
+                    <strong>
+                        {{ ticket.assigned_team }}
+                    </strong>
+                </div>
+
+                <div class="summary-item">
+                    <span>Status</span>
+
+                    <strong class="status-open">
+                        {{ ticket.status.value }}
+                    </strong>
+                </div>
+
+                <div class="summary-item">
+                    <span>Target response</span>
+                    <strong>
+                        {{ ticket.sla_hours }} hours
+                    </strong>
+                </div>
+
+                <div class="summary-item">
+                    <span>Created</span>
+
+                    <strong>
+                        {{ ticket.created_at.strftime(
+                        "%d %b %Y, %H:%M"
+                        ) }}
+                    </strong>
+                </div>
+
+            </div>
+
+
+            <div class="success-note">
+
+                <strong>What happens next?</strong>
+
+                <p>
+                    The {{ ticket.assigned_team }} will review your
+                    request. Keep your ticket number for reference.
+                </p>
+
+            </div>
+
+
+            <a href="/" class="secondary-button">
+                Submit another request
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}Employee Support{% endblock %}</title>
+
+    <link
+            rel="stylesheet"
+            href="{{ url_for('static', path='/css/style.css') }}"
+    >
+
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+
+<header class="topbar">
+    <div class="container nav-container">
+
+        <a href="/" class="brand">
+            <div class="brand-icon">E</div>
+
+            <div>
+                <div class="brand-name">Employee Support</div>
+                <div class="brand-subtitle">Request Management</div>
+            </div>
+        </a>
+
+        <nav>
+            <a href="/" class="nav-link">Submit Request</a>
+            <a href="/admin" class="nav-link">Admin Dashboard</a>
+        </nav>
+
+    </div>
+</header>
+
+
+<main>
+    {% block content %}{% endblock %}
+</main>
+
+
+<footer>
+    <div class="container">
+        Employee Request Management System
+    </div>
+</footer>
+
+<script src="{{ url_for('static', path='/js/app.js') }}"></script>
+
+{% block scripts %}{% endblock %}
+
+</body>
+</html>
